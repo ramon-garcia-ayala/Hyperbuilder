@@ -5,6 +5,21 @@
   --darkpink: #f35b8b;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
 h3 {
   color: black;
 }
