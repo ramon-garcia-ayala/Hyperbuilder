@@ -235,37 +235,32 @@ onUnmounted(() => {
 <style scoped>
 .viewcube-card {
   position: absolute;
-  /* La posición inicial se maneja via style binding */
   z-index: 90;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(5px);
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   border: 1px solid rgba(0,0,0,0.1);
+  font-family: 'Roboto Mono', monospace;
   display: flex;
   flex-direction: column;
-  width: 130px; /* Ancho fijo para alinear con botones superiores */
+  width: 130px;
+  overflow: hidden;
 }
 
 .viewcube-header {
   background: #f5f5f5;
   font-size: 0.7rem;
   font-weight: bold;
-  padding: 6px;
+  color: #555;
+  padding: 6px 10px;
   text-align: center;
   border-bottom: 1px solid #eee;
-  text-transform: uppercase;
-  color: #555;
   cursor: move;
-  border-radius: 15px 15px 0 0;
-}
-
-.viewcube-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
 }
 
 .viewcube-body {

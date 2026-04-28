@@ -3,10 +3,16 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 <template>
+  <!-- WELCOME SCREEN -->
+  <WelcomeScreen :visible="showWelcome" @start="() => { showWelcome = false; sessionStorage.setItem('hb_visited', '1') }" />
+
   <!-- Main Layout Container -->
   <div class="main-container">
+    <!-- MOBILE BACKDROP: Closes sidebar when tapping outside -->
+    <div v-if="isMobilePanelOpen" class="mobile-overlay" @click="isMobilePanelOpen = false"></div>
+
     <!-- LEFT SIDEBAR: Contains all inputs (Sliders, Tables) for the parametric model -->
-    <div id="sidebar">
+    <div id="sidebar" :class="{ open: isMobilePanelOpen }">
       
       <div class="logo-section">
         <img :src="logo" alt="HyperBuilder" class="app-logo" />
@@ -164,11 +170,22 @@
         />
         
         <!-- VERSION HISTORY: Bottom bar to save/restore design states -->
-        <VersionHistory 
+        <VersionHistory
+          ref="versionHistoryRef"
           :getData="collectVersionData"
           @restoreVersion="restoreState"
           @visibilityChanged="handleHistoryVisibility"
         />
+
+        <!-- MOBILE FAB: Toggle parameters sidebar (visible only on mobile) -->
+        <div class="mobile-fab">
+          <button class="mobile-fab-history" @click="versionHistoryRef?.toggle()" title="Version History">
+            ⏱
+          </button>
+          <button class="mobile-fab-params" @click="isMobilePanelOpen = !isMobilePanelOpen">
+            {{ isMobilePanelOpen ? '✕  CLOSE' : '☰  PARAMETERS' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -238,6 +255,7 @@ import DisplayModes from './components/DisplayModes.vue' // IMPORTAR DISPLAY MOD
 import ViewportLayers from './components/ViewportLayers.vue' // IMPORTAR LAYERS
 import ObjectInfoCard from './components/ObjectInfoCard.vue' // IMPORTAR TARJETA DE INFO
 import AnalyticsSidebar from './components/AnalyticsSidebar.vue'
+import WelcomeScreen from './components/WelcomeScreen.vue'
 import def3 from '@/assets/HB01-Program_Aggregation_DM.gh'
 import def4 from '@/assets/V2.0.0_Hyper-builder_Script.gh'
 import def0 from '@/assets/Test.gh'
@@ -249,6 +267,8 @@ const colorMode = ref('program') // Estado para el modo de color: 'tower' | 'pro
 const activeTowerIndex = ref(0) // Índice de la torre que estamos editando actualmente
 const isEditModeActive = ref(false) // Mantiene el estado del modo de edición del grid
 const isContextEditMode = ref(false) // Estado para el modo edición de contexto
+const isMobilePanelOpen = ref(false) // Controla el bottom sheet de parámetros en móvil
+const showWelcome = ref(!sessionStorage.getItem('hb_visited')) // Solo la primera vez por sesión
 
 const programSliders = ref([]) // Referencias a los componentes SliderInput
 function setSliderRef(el, index) {
@@ -426,6 +446,7 @@ const chartValues = ref([])
 const geometryViewRef = ref(null)
 const chartOverlayRef = ref(null)
 const towerBarChartRef = ref(null)
+const versionHistoryRef = ref(null)
 
 const isAnalyticsVisible = ref(true)
 function handleAnalyticsVisibility(visible) {
@@ -633,6 +654,7 @@ function randomizeActiveTower() {
       const max = programSliders.value[i] && programSliders.value[i].localMax ? programSliders.value[i].localMax : 10
       return Math.floor(Math.random() * max) + 1
     })
+    if (geometryViewRef.value) geometryViewRef.value.resetCameraView(false)
   }
 }
 
@@ -1266,5 +1288,120 @@ hr {
 
 .mode-buttons button:hover:not(.active) {
   background: #e0e0e0;
+}
+
+/* ─── MOBILE FAB (hidden on desktop) ─── */
+.mobile-fab {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+  gap: 10px;
+  align-items: center;
+}
+.mobile-fab-history {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mobile-fab-history:hover { background: #f5f5f5; transform: translateY(-2px); }
+.mobile-fab-params {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 30px;
+  height: 44px;
+  padding: 0 18px;
+  font-size: 0.75rem;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.mobile-fab-params:hover { background: #f5f5f5; transform: translateY(-2px); }
+
+/* ─── MOBILE OVERLAY BACKDROP (hidden on desktop) ─── */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 499;
+  backdrop-filter: blur(2px);
+}
+
+/* ─── MOBILE RESPONSIVE (≤768px) ─── */
+@media (max-width: 768px) {
+  /* El sidebar se convierte en un bottom sheet */
+  #sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 70vh;
+    z-index: 500;
+    border-radius: 20px 20px 0 0;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    transform: translateY(101%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px 20px 40px 20px;
+    background: white;
+  }
+  #sidebar.open {
+    transform: translateY(0);
+  }
+  /* Drag handle visual */
+  #sidebar::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(0,0,0,0.12);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+
+  /* El viewer ocupa todo el espacio */
+  #viewer-wrapper {
+    width: 100%;
+  }
+  #viewer {
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    margin: 5px;
+    border-radius: 15px;
+  }
+
+  /* El sidebar de analytics no empuja el viewer */
+  .right-sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 400;
+  }
+
+  /* Mostrar FAB y backdrop en móvil */
+  .mobile-fab { display: flex; align-items: center; }
+  .mobile-overlay { display: block; }
 }
 </style>

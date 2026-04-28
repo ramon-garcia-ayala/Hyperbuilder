@@ -1,13 +1,32 @@
 <template>
   <div id="viewport" ref="viewportRef">
     <div id="threejs-container"></div>
+
+    <!-- LOADING OVERLAY -->
+    <Transition name="compute-fade">
+      <div v-if="isComputing" class="compute-overlay">
+        <div class="blocks-scene">
+          <div class="block b1"></div>
+          <div class="block b2"></div>
+          <div class="block b3"></div>
+          <div class="block b4"></div>
+          <div class="block b5"></div>
+          <div class="block b6"></div>
+        </div>
+        <div class="compute-label">
+          ASSEMBLING
+          <span class="dot d1">.</span><span class="dot d2">.</span><span class="dot d3">.</span>
+        </div>
+      </div>
+    </Transition>
+
     <div v-if="webglError" id="webgl-error">
-      <strong>WebGL no disponible</strong>
-      <p>Tu navegador no puede inicializar el visor 3D. Prueba lo siguiente:</p>
+      <strong>WebGL unavailable</strong>
+      <p>Your browser could not initialize the 3D viewer. Try the following:</p>
       <ul>
-        <li>Activa la aceleración de hardware en la configuración del navegador</li>
-        <li>Usa Chrome o Edge con hardware acceleration activado</li>
-        <li>Si usas una VM o escritorio remoto, habilita el soporte GPU</li>
+        <li>Enable hardware acceleration in your browser settings</li>
+        <li>Use Chrome or Edge with hardware acceleration turned on</li>
+        <li>If using a VM or remote desktop, enable GPU support</li>
       </ul>
     </div>
   </div>
@@ -37,6 +56,7 @@ let pointsGroup // Grupo para visualizar los puntos
 let contextGroup // NUEVO: Contenedor para geometría estática importada
 const isAutoRotating = ref(false) // Estado de la rotación automática
 const webglError = ref(false) // Muestra mensaje de error si WebGL no está disponible
+const isComputing = ref(false) // Controla la pantalla de carga
 
 // Variables para capas auxiliares
 let dimensionsGroup = null
@@ -323,8 +343,9 @@ function init() {
 
 async function compute() {
   const currentComputeId = ++latestComputeId;
+  isComputing.value = true
   try {
-    if (!modelContainer) return;
+    if (!modelContainer) { isComputing.value = false; return; }
     
     const trees = []
     
@@ -505,10 +526,12 @@ async function compute() {
       
       checkCollisions()
       
+      isComputing.value = false
       emits('geometry-updated')
     });
   } catch (error) {
     console.error("❌ ERROR EN RHINO COMPUTE:", error);
+    isComputing.value = false
   }
 }
 
@@ -555,6 +578,7 @@ function setTransformMode(mode) {
 onMounted(async () => {
   init()
   if (webglError.value) return  // No continuar si WebGL falló
+  isComputing.value = true
   await loadRhino()
   compute()
   window.addEventListener('keydown', onKeyDown)
@@ -1352,6 +1376,81 @@ defineExpose({
 #viewport, #threejs-container {
   height: 100%; width: 100%; min-width: 200px;
 }
+
+/* ── LOADING OVERLAY ── */
+.compute-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 50;
+  border-radius: inherit;
+}
+
+/* Blocks scene */
+.blocks-scene {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  height: 70px;
+}
+
+.block {
+  width: 13px;
+  border-radius: 3px 3px 0 0;
+  transform-origin: bottom;
+  animation: blockRise 1.6s ease-in-out infinite;
+}
+
+/* Heights — skyline silhouette */
+.b1 { height: 28px; background: #000;     animation-delay: 0s;    }
+.b2 { height: 55px; background: #f2dd1c;  animation-delay: 0.15s; }
+.b3 { height: 38px; background: #000;     animation-delay: 0.30s; }
+.b4 { height: 65px; background: #000;     animation-delay: 0.45s; }
+.b5 { height: 42px; background: #2847fc;  animation-delay: 0.60s; }
+.b6 { height: 22px; background: #000;     animation-delay: 0.75s; }
+
+@keyframes blockRise {
+  0%        { transform: scaleY(0);    opacity: 0; }
+  25%       { transform: scaleY(1.06); opacity: 1; }
+  40%, 70%  { transform: scaleY(1);    opacity: 1; }
+  90%, 100% { transform: scaleY(0);    opacity: 0; }
+}
+
+/* Label */
+.compute-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #000;
+}
+
+/* Dots */
+.dot {
+  animation: dotBlink 1.6s ease-in-out infinite;
+  opacity: 0;
+}
+.d1 { animation-delay: 0.2s; }
+.d2 { animation-delay: 0.5s; }
+.d3 { animation-delay: 0.8s; }
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+/* Transition */
+.compute-fade-enter-active { transition: opacity 0.2s ease; }
+.compute-fade-leave-active { transition: opacity 0.4s ease; }
+.compute-fade-enter-from,
+.compute-fade-leave-to    { opacity: 0; }
 #webgl-error {
   position: absolute;
   top: 50%;

@@ -101,11 +101,12 @@ function stopDrag() {
 .display-card {
   position: absolute;
   z-index: 90;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(5px);
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   border: 1px solid rgba(0,0,0,0.1);
+  font-family: 'Roboto Mono', monospace;
   width: fit-content;
   min-width: 90px;
   overflow: hidden;
@@ -115,15 +116,15 @@ function stopDrag() {
   background: #f5f5f5;
   font-size: 0.7rem;
   font-weight: bold;
-  padding: 6px;
+  color: #555;
+  padding: 6px 10px;
   text-align: center;
   border-bottom: 1px solid #eee;
-  color: #555;
   cursor: move;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  gap: 10px;
 }
 
 .toggle-icon {

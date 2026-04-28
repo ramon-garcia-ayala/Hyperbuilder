@@ -131,6 +131,10 @@ function restore(version) {
 function deleteVersion(index) {
   versions.value.splice(index, 1)
 }
+
+defineExpose({
+  toggle: () => { isVisible.value = !isVisible.value }
+})
 </script>
 
 <style scoped>
@@ -272,5 +276,11 @@ function deleteVersion(index) {
   width: 100%;
   outline: none;
   padding: 0;
+}
+
+@media (max-width: 768px) {
+  .history-container {
+    display: none;
+  }
 }
 </style>

@@ -21,7 +21,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 
-const isOpen = ref(true)
+const isOpen = ref(window.innerWidth > 768)
 const emit = defineEmits(['visibility-changed', 'clear-cards'])
 
 function toggleSidebar() {
@@ -112,5 +112,24 @@ watch(isOpen, (newValue) => {
   font-size: 1.5rem;
   color: #555;
   box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+}
+
+@media (max-width: 768px) {
+  .analytics-container {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 400;
+    pointer-events: none; /* no bloquea el viewer cuando está colapsada */
+  }
+  .analytics-sidebar {
+    pointer-events: auto;
+    height: 100%;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.12);
+  }
+  .toggle-btn {
+    pointer-events: auto;
+  }
 }
 </style>
