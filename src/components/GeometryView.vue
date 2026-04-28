@@ -1,11 +1,20 @@
 <template>
   <div id="viewport" ref="viewportRef">
     <div id="threejs-container"></div>
+    <div v-if="webglError" id="webgl-error">
+      <strong>WebGL no disponible</strong>
+      <p>Tu navegador no puede inicializar el visor 3D. Prueba lo siguiente:</p>
+      <ul>
+        <li>Activa la aceleración de hardware en la configuración del navegador</li>
+        <li>Usa Chrome o Edge con hardware acceleration activado</li>
+        <li>Si usas una VM o escritorio remoto, habilita el soporte GPU</li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, watch, ref } from 'vue'
+import { onMounted, onUnmounted, watch, ref, computed } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { Rhino3dmLoader } from 'three/addons/loaders/3DMLoader.js'
@@ -27,6 +36,7 @@ let modelContainer // CAMBIO: Contenedor para la rotación constante
 let pointsGroup // Grupo para visualizar los puntos
 let contextGroup // NUEVO: Contenedor para geometría estática importada
 const isAutoRotating = ref(false) // Estado de la rotación automática
+const webglError = ref(false) // Muestra mensaje de error si WebGL no está disponible
 
 // Variables para capas auxiliares
 let dimensionsGroup = null
@@ -200,9 +210,34 @@ watch(() => props.editContextMode, (isEditing) => {
   }
 })
 
+function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement('canvas')
+    return !!(window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')))
+  } catch {
+    return false
+  }
+}
+
 function init() {
+  if (!isWebGLAvailable()) {
+    webglError.value = true
+    console.error('WebGL no está disponible en este navegador/entorno.')
+    return
+  }
+
   // preserveDrawingBuffer: true is REQUIRED for screenshots to work
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
+  let rendererCreated = false
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
+    rendererCreated = true
+  } catch (e) {
+    webglError.value = true
+    console.error('Error al crear el renderer de WebGL:', e)
+    return
+  }
+  if (!rendererCreated) return
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap 
     
@@ -519,6 +554,7 @@ function setTransformMode(mode) {
 
 onMounted(async () => {
   init()
+  if (webglError.value) return  // No continuar si WebGL falló
   await loadRhino()
   compute()
   window.addEventListener('keydown', onKeyDown)
@@ -1315,6 +1351,33 @@ defineExpose({
 <style scoped>
 #viewport, #threejs-container {
   height: 100%; width: 100%; min-width: 200px;
+}
+#webgl-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px 32px;
+  max-width: 420px;
+  font-family: sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: left;
+  z-index: 100;
+}
+#webgl-error strong {
+  font-size: 1.1rem;
+  color: #c00;
+  display: block;
+  margin-bottom: 8px;
+}
+#webgl-error ul {
+  margin: 8px 0 0 16px;
+  padding: 0;
+  line-height: 1.8;
 }
 /* Estilo para las etiquetas de cota HTML */
 :deep(.dimension-label) {
