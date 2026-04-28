@@ -2,7 +2,7 @@
 
 A web-based parametric design tool for configuring multi-tower vertical communities. Built with Vue.js 3 and Three.js, it connects to a Rhino Compute backend to evaluate Grasshopper scripts and generate real-time 3D geometry.
 
-![HyperBuilder](src/assets/HB_Logo_01.png)
+![HyperBuilder](src/assets/Gif.gif)
 
 ## Features
 
