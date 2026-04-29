@@ -22,6 +22,8 @@ import html2canvas from 'html2canvas'
 const showOptions = ref(false)
 const includeOverlays = ref(true) // FIX: Activado por defecto para incluir medidas
 
+defineExpose({ downloadImage })
+
 async function downloadImage(format, quality) {
   // Ocultamos el menú inmediatamente para que no salga en la foto
   showOptions.value = false

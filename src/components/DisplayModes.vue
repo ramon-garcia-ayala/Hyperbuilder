@@ -24,7 +24,7 @@ const props = defineProps({
 
 const currentMode = ref('shaded')
 const cardRef = ref(null)
-const isCollapsed = ref(false)
+const isCollapsed = ref(window.innerWidth <= 768)
 
 // Posición inicial (Debajo del ViewCube)
 const cardStyle = ref({ top: '280px', right: '20px' })
@@ -158,5 +158,18 @@ function stopDrag() {
   background: #f2dd1c; /* Color IAAC */
   color: black;
   border-color: #f2dd1c;
+}
+
+@media (max-width: 768px) {
+  .display-card {
+    top: 8px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    min-width: 100px;
+  }
+  .card-header { padding: 10px 12px; }
+  .toggle-icon { padding: 6px 10px; font-size: 1rem; }
+  .mode-btn { padding: 10px 6px; font-size: 0.75rem; }
 }
 </style>

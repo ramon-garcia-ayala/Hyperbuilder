@@ -63,7 +63,7 @@ const cardRef = ref(null)
 const cubeEl = ref(null)
 const isOrtho = ref(false)
 const isPaused = ref(false)
-const isCollapsed = ref(false)
+const isCollapsed = ref(window.innerWidth <= 768)
 let animationFrameId
 
 // State for Card Dragging
@@ -386,4 +386,16 @@ onUnmounted(() => {
 .bfl { transform: translate3d(-30px,  30px,  30px); }
 .bbr { transform: translate3d( 30px,  30px, -30px); }
 .bbl { transform: translate3d(-30px,  30px, -30px); }
+
+@media (max-width: 768px) {
+  .viewcube-card {
+    top: 8px !important;
+    right: 8px !important;
+    left: auto !important;
+    width: 110px;
+  }
+  .viewcube-header { padding: 10px 12px; }
+  .toggle-icon { padding: 6px 10px; font-size: 1rem; }
+  .projection-btn { padding: 8px 10px; font-size: 0.75rem; }
+}
 </style>

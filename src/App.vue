@@ -22,26 +22,36 @@
       </div>
       <hr />
 
-      <!-- CONTROLES DE PUNTOS BASE (Project Grid) -->
-      <BasePointsControl 
-        v-model="buildingPoints" 
-        @clear-points="handleClearPoints"
-        @edit-mode-changed="isEditModeActive = $event"
-      />
-      
-      <!-- ALERTA DE COLISIONES -->
-      <div v-if="activeCollisions.length > 0" class="collision-alert">
-        <span>⚠️ Collisions Detected</span>
-        <button class="resolve-btn" @click="resolveCollisions">Resolve</button>
+      <!-- PROJECT GRID SECTION (collapsible on mobile) -->
+      <div class="mobile-section-toggle" @click="showGridSection = !showGridSection">
+        <span>PROJECT GRID</span>
+        <span>{{ showGridSection ? '▲' : '▼' }}</span>
+      </div>
+      <div v-show="showGridSection">
+        <BasePointsControl
+          v-model="buildingPoints"
+          @clear-points="handleClearPoints"
+          @edit-mode-changed="isEditModeActive = $event"
+        />
+        <div v-if="activeCollisions.length > 0" class="collision-alert">
+          <span>⚠️ Collisions Detected</span>
+          <button class="resolve-btn" @click="resolveCollisions">Resolve</button>
+        </div>
       </div>
       <hr />
 
-      <!-- SITE CONTEXT UPLOAD -->
-      <ContextImport 
-        @load-context="handleLoadContext" 
-        @clear-context="handleClearContext" 
-        @toggle-edit-context="isContextEditMode = $event"
-      />
+      <!-- IMPORT 3D SECTION (collapsible on mobile) -->
+      <div class="mobile-section-toggle" @click="showContextSection = !showContextSection">
+        <span>IMPORT 3D</span>
+        <span>{{ showContextSection ? '▲' : '▼' }}</span>
+      </div>
+      <div v-show="showContextSection">
+        <ContextImport
+          @load-context="handleLoadContext"
+          @clear-context="handleClearContext"
+          @toggle-edit-context="isContextEditMode = $event"
+        />
+      </div>
       <hr />
 
       <!-- TOWER SELECTION TABS -->
@@ -120,9 +130,31 @@
         
         <!-- EXPORT BUTTONS: 3D Model, CAD (DXF), Image (PNG) -->
         <div class="export-controls-container">
-          <ModelExport :target="geometryViewRef" />
-          <DxfExport :target="geometryViewRef" />
-          <PngExport />
+          <ModelExport ref="modelExportRef" :target="geometryViewRef" />
+          <DxfExport ref="dxfExportRef" :target="geometryViewRef" />
+          <PngExport ref="pngExportRef" />
+        </div>
+
+        <!-- MOBILE DOWNLOAD FAB (single ⬇ button, visible only on mobile) -->
+        <div class="mobile-download-fab" @click.stop="showMobileDownload = !showMobileDownload">
+          ⬇
+          <div v-if="showMobileDownload" class="mobile-download-menu" @click.stop>
+            <div class="dl-option" @click="modelExportRef?.downloadRhino(); showMobileDownload = false">
+              Rhino (.3dm) <small>Native Format</small>
+            </div>
+            <div class="dl-option" @click="modelExportRef?.downloadObj(); showMobileDownload = false">
+              SketchUp (.obj) <small>Mesh Format</small>
+            </div>
+            <div class="dl-option" @click="dxfExportRef?.generateDxf(); showMobileDownload = false">
+              AutoCAD (.dxf) <small>CAD Lines</small>
+            </div>
+            <div class="dl-option" @click="pngExportRef?.downloadImage('image/png'); showMobileDownload = false">
+              PNG <small>High Quality</small>
+            </div>
+            <div class="dl-option" @click="pngExportRef?.downloadImage('image/jpeg', 0.9); showMobileDownload = false">
+              JPG <small>Small File</small>
+            </div>
+          </div>
         </div>
 
         <!-- TRANSFORM CONTROLS (Move, Rotate, Scale) -->
@@ -269,6 +301,9 @@ const isEditModeActive = ref(false) // Mantiene el estado del modo de edición d
 const isContextEditMode = ref(false) // Estado para el modo edición de contexto
 const isMobilePanelOpen = ref(false) // Controla el bottom sheet de parámetros en móvil
 const showWelcome = ref(!sessionStorage.getItem('hb_visited')) // Solo la primera vez por sesión
+const showGridSection = ref(window.innerWidth > 768) // Collapsed by default on mobile
+const showContextSection = ref(window.innerWidth > 768) // Collapsed by default on mobile
+const showMobileDownload = ref(false) // Mobile download dropdown
 
 const programSliders = ref([]) // Referencias a los componentes SliderInput
 function setSliderRef(el, index) {
@@ -447,6 +482,9 @@ const geometryViewRef = ref(null)
 const chartOverlayRef = ref(null)
 const towerBarChartRef = ref(null)
 const versionHistoryRef = ref(null)
+const modelExportRef = ref(null)
+const dxfExportRef = ref(null)
+const pngExportRef = ref(null)
 
 const isAnalyticsVisible = ref(true)
 function handleAnalyticsVisibility(visible) {
@@ -1290,6 +1328,58 @@ hr {
   background: #e0e0e0;
 }
 
+/* ─── MOBILE SECTION TOGGLES (hidden on desktop) ─── */
+.mobile-section-toggle {
+  display: none;
+}
+
+/* ─── MOBILE DOWNLOAD FAB (hidden on desktop) ─── */
+.mobile-download-fab {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 95;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.mobile-download-fab:hover { background: #f2dd1c; }
+
+.mobile-download-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 5px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  border: 1px solid #eee;
+  width: 160px;
+  overflow: hidden;
+  z-index: 200;
+}
+.dl-option {
+  padding: 10px 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+.dl-option:last-child { border-bottom: none; }
+.dl-option:hover { background: #f2dd1c; }
+.dl-option small { display: block; font-weight: normal; opacity: 0.6; font-size: 0.6rem; margin-top: 2px; }
+
 /* ─── MOBILE FAB (hidden on desktop) ─── */
 .mobile-fab {
   display: none;
@@ -1349,40 +1439,41 @@ hr {
 
 /* ─── MOBILE RESPONSIVE (≤768px) ─── */
 @media (max-width: 768px) {
-  /* El sidebar se convierte en un bottom sheet */
+  /* Layout columna: viewer arriba, params abajo */
+  .main-container {
+    flex-direction: column;
+  }
+
+  /* Sidebar siempre visible en la parte inferior */
   #sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
     width: 100%;
-    max-height: 70vh;
-    z-index: 500;
-    border-radius: 20px 20px 0 0;
+    height: 33vh;
+    min-height: 33vh;
+    flex-shrink: 0;
     border-right: none;
     border-top: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-    transform: translateY(101%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 20px 20px 40px 20px;
-    background: white;
+    border-radius: 0;
+    padding: 14px 20px 20px 20px;
+    overflow-y: auto;
+    order: 2;
   }
-  #sidebar.open {
-    transform: translateY(0);
-  }
+
   /* Drag handle visual */
   #sidebar::before {
     content: '';
     display: block;
-    width: 40px;
-    height: 4px;
-    background: rgba(0,0,0,0.12);
+    width: 36px;
+    height: 3px;
+    background: rgba(0,0,0,0.1);
     border-radius: 2px;
-    margin: 0 auto 18px;
+    margin: 0 auto 12px;
   }
 
-  /* El viewer ocupa todo el espacio */
+  /* Viewer ocupa el espacio restante */
   #viewer-wrapper {
-    width: 100%;
+    flex: 1;
+    min-height: 0;
+    order: 1;
   }
   #viewer {
     width: calc(100% - 10px);
@@ -1391,7 +1482,7 @@ hr {
     border-radius: 15px;
   }
 
-  /* El sidebar de analytics no empuja el viewer */
+  /* Analytics no empuja el layout */
   .right-sidebar {
     position: fixed;
     right: 0;
@@ -1400,8 +1491,29 @@ hr {
     z-index: 400;
   }
 
-  /* Mostrar FAB y backdrop en móvil */
+  /* Solo el botón de history en FAB */
   .mobile-fab { display: flex; align-items: center; }
-  .mobile-overlay { display: block; }
+  .mobile-fab-params { display: none; }
+
+  /* Ocultar export container desktop, mostrar FAB descarga */
+  .export-controls-container { display: none; }
+  .mobile-download-fab { display: flex; }
+
+  /* Mostrar toggles de sección */
+  .mobile-section-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .mobile-section-toggle:hover { color: #000; }
 }
 </style>

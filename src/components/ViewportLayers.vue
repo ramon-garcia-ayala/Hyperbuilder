@@ -48,7 +48,7 @@ const showLines = ref(true) // Activado por defecto
 const castShadow = ref(true)
 
 // Estado para colapsar y mover
-const isCollapsed = ref(false)
+const isCollapsed = ref(window.innerWidth <= 768)
 const cardRef = ref(null)
 const cardStyle = ref({ top: '20px', left: '20px' }) // Posición inicial
 let isDragging = false
@@ -196,5 +196,18 @@ hr {
   border: none;
   border-top: 1px solid #eee;
   margin: 8px -15px;
+}
+
+@media (max-width: 768px) {
+  .layers-card {
+    top: 8px !important;
+    left: 8px !important;
+    right: auto !important;
+    min-width: 120px;
+  }
+  .card-header { padding: 10px 12px; }
+  .toggle-icon { padding: 6px 10px; font-size: 1rem; }
+  .layer-item label { font-size: 0.85rem; }
+  .layer-item input { width: 18px; height: 18px; }
 }
 </style>

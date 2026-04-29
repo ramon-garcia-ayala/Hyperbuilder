@@ -47,6 +47,8 @@ function downloadRhino() {
   URL.revokeObjectURL(link.href)
 }
 
+defineExpose({ downloadRhino, downloadObj })
+
 function downloadObj() {
   showOptions.value = false
   if (!props.target || !props.target.getSceneObject) return

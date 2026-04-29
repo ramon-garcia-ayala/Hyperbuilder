@@ -11,6 +11,8 @@ const props = defineProps({
   target: Object // Referencia al componente GeometryView
 })
 
+defineExpose({ generateDxf })
+
 function generateDxf() {
   // 1. Get 3D Model
   if (!props.target || !props.target.getSceneObject) {
